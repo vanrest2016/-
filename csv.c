@@ -1,51 +1,74 @@
 #include <stdio.h>
 #include <conio.h>
 #include <string.h>
+#define N 100
 
-/* Ñòðóêòóðà äëÿ õðàíåíèÿ èíôîðìàöèè ïðî îäíîãî ÷åëîâåêà */
+/* Структура для хранения информации про одного человека */
 typedef struct tagITEM
 {
-  char Surname[20], Name[20];
-  int Age;
+  char Surname[N], Name[N], Kafedra[N], Faculty[N], Number_gradebook[N];
 } ITEM;
 
-/* Ìàññèâ ìàêñèìóì íà 20 ÷åëîâåê */
-ITEM Men[20];
+/* Массив максимум на 100 человек */
+ITEM Men[N];
 
-/* Êîëè÷åñòâî çàíÿòûõ ýëåìåíòîâ â ìàññèâå */
+/* Количество занятых элементов в массиве */
 int Number;
 
-/* Ôóíêöèÿ äëÿ âûâîäà âñåõ ýëåèåíòîâ */
+/* Функция для вывода всех элеиентов */
 void Print( void )
 {
   int i;
 
-  printf(" N  Surname             Name                 Age\n");
+  printf(" Number       Surname             Name          Kafedra                 Faculty\n");
   for (i = 0; i < Number; i ++)
-    printf("%2i. %-20s %-20s %3i\n", i + 1, Men[i].Surname,
-           Men[i].Name, Men[i].Age);
+    printf("%2i. %-10s %-20s %-20s %-20s %-20s\n", i + 1, Men[i].Number_gradebook, Men[i].Surname,
+           Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
 } 
 
-/* Ôóíêöèÿ äëÿ äîáàâëåíèÿ ýëåìåíòà */
+/* Функция для добавления элемента */
 void Add( void )
 {
-  if (Number == 19)
+  if (Number == N)
   {
     fprintf(stderr, "Element don't add'\n");
     return;
   }
-
+  printf("Number gradebook > ");
+  scanf("%s", Men[Number].Number_gradebook);
   printf("Surname > ");
   scanf("%s", Men[Number].Surname);
   printf("Name > ");
   scanf("%s", Men[Number].Name);
-  printf("Age> ");
-  scanf("%i", &Men[Number].Age);
+  printf("Kafedra > ");
+  scanf("%s", &Men[Number].Kafedra);
+  printf("Faculty > ");
+  scanf("%s", &Men[Number].Faculty);
 
   Number ++;
 } 
+void Change( void )
+{
+  FILE *F;
+  int i;
 
-/* Ôóíêöèÿ äëÿ óäàëåíèÿ ýëåìåíòà */
+  if ((F = fopen("students.csv", "wt")) == NULL)
+  {
+    fprintf(stderr, "File opened error 'students.csv'\n");
+    return;
+  }
+  printf("Enter number of element > ");
+  scanf("%i", &i);
+    if (i < 1 || i > Number)
+  {
+    fprintf(stderr, "Element %i don't exists'\n", i);
+    return;
+  }
+  
+  fclose(F);
+}
+
+/* Функция для удаления элемента */
 void Del( void )
 {
   int i;
@@ -65,32 +88,32 @@ void Del( void )
   Number --;
 } 
 
-/* Ôóíêöèÿ äëÿ ñîõðàíåíèÿ ìàññèâà â ôàéëå */
+/* Функция для сохранения массива в файле */
 void Save( void )
 {
   FILE *F;
   int i;
 
-  if ((F = fopen("task1.csv", "wt")) == NULL)
+  if ((F = fopen("students.csv", "wt")) == NULL)
   {
-    fprintf(stderr, "File opened error 'task1.csv'\n");
+    fprintf(stderr, "File opened error 'students.csv'\n");
     return;
   }
 
   fprintf(F, "%i\n", Number);
   for (i = 0; i < Number; i ++)
-    fprintf(F, "%s\n%s\n%i\n", Men[i].Surname, Men[i].Name, Men[i].Age);
+    fprintf(F, "%s,%s,%s,%s,%s\n", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
 
   fclose(F);
 } 
 
-/* Ôóíêöèÿ äëÿ ÷òåíèÿ ìàññèâà èç ôàéëà */
+/* Функция для чтения массива из файла */
 void Load( void )
 {
   FILE *F;
   int i;
 
-  if ((F = fopen("task1.csv", "rt")) == NULL)
+  if ((F = fopen("students.csv", "rt")) == NULL)
   {
     fprintf(stderr, "File opened Error\n");
     return;
@@ -98,12 +121,12 @@ void Load( void )
 
   fscanf(F, "%i", &Number);
   for (i = 0; i < Number; i ++)
-    fscanf(F, "%s%s%i", Men[i].Surname, Men[i].Name, &Men[i].Age);
+    fscanf(F, "%s%s%s%s%s", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, &Men[i].Kafedra, Men[i].Faculty);
 
   fclose(F);
 } 
 
-/* Ôóíêöèÿ äëÿ óïîðÿäî÷èâàíèÿ ìàññèâà ïî ôàìèëèè */
+/* Функция для упорядочивания массива по фамилии */
 void Sort( void )
 {
   int i, j;
@@ -119,20 +142,21 @@ void Sort( void )
       }
 } 
 
-/* Âûâîä ìåíþ è ÷òåíèå íîìåðà âûáðàííîãî ïóíêòà */
+/* Вывод меню и чтение номера выбранного пункта */
 int Menu( void )
 {
   int c = 0;
 
-  while ((c < '0' || c > '6') && c != 27)
+  while ((c < '0' || c > '7') && c != 27)
   {
     printf("0 : Exit\n"
-           "1 : Add\n"
-           "2 : Save\n"
-           "3 : Load\n"
-           "4 : Enter\n"
-           "5 : Sort\n"
-           "6 : Delete\n"
+            "1 : Add\n"
+        	"2 : Change\n"
+            "3 : Save\n"
+            "4 : Load\n"
+            "5 : Enter\n"
+            "6 : Sort\n"
+            "7 : Delete\n"
            ">");
     c = getch();
     printf("%c\n", c);
@@ -140,7 +164,7 @@ int Menu( void )
   return c;
 } 
 
-/* Îñíîâíàÿ ôóíêöèÿ */
+/* Основная функция */
 int main()
 {
   int Selection;
@@ -151,20 +175,23 @@ int main()
     {
     case '1':
       Add();
-      break;
-    case '2':
-      Save();
+      break;    
+	case '2':
+      Change();
       break;
     case '3':
-      Load();
+      Save();
       break;
     case '4':
-      Print();
+      Load();
       break;
     case '5':
-      Sort();
+      Print();
       break;
     case '6':
+      Sort();
+      break;
+    case '7':
       Del();
       break;
     }
