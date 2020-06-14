@@ -3,72 +3,136 @@
 #include <string.h>
 #define N 100
 
-/* Структура для хранения информации про одного человека */
-typedef struct tagITEM
+/* Ñòðóêòóðà äëÿ õðàíåíèÿ èíôîðìàöèè ïðî îäíîãî ÷åëîâåêà */
+typedef struct student
 {
-  char Surname[N], Name[N], Kafedra[N], Faculty[N], Number_gradebook[N];
+  char Surname[N], Name[N], Kafedra[N], Faculty[N],  Number_gradebook[N];
 } ITEM;
 
-/* Массив максимум на 100 человек */
+/* Ìàññèâ ìàêñèìóì íà 100 ÷åëîâåê */
 ITEM Men[N];
 
-/* Количество занятых элементов в массиве */
+/* Êîëè÷åñòâî çàíÿòûõ ýëåìåíòîâ â ìàññèâå */
 int Number;
 
-/* Функция для вывода всех элеиентов */
+int count_students()
+{
+	int line = 0;
+  FILE *F = fopen("students.csv", "r");
+	if (F == NULL)
+	{
+		printf("No opened error!\n");
+	}
+	else
+	{
+		while (!feof(F))
+		{
+			if (fgetc(F)=='\n')
+				line++;
+		}
+		return ++line;
+		fclose(F);
+	}
+}
+
+/* Ôóíêöèÿ äëÿ âûâîäà âñåõ ýëåèåíòîâ */
 void Print( void )
 {
   int i;
 
-  printf(" Number       Surname             Name          Kafedra                 Faculty\n");
+  printf("    Number       Surname             Name          Kafedra                 Faculty\n");
   for (i = 0; i < Number; i ++)
     printf("%2i. %-10s %-20s %-20s %-20s %-20s\n", i + 1, Men[i].Number_gradebook, Men[i].Surname,
            Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
 } 
 
-/* Функция для добавления элемента */
+/* Ôóíêöèÿ äëÿ äîáàâëåíèÿ ýëåìåíòà */
 void Add( void )
 {
+	char i[N];
+	int j=0;
   if (Number == N)
   {
-    fprintf(stderr, "Element don't add'\n");
+    fprintf(stderr, "Element don't add\n");
     return;
   }
   printf("Number gradebook > ");
-  scanf("%s", Men[Number].Number_gradebook);
+  scanf("%s", &i);
+  for (j=0; j<=Number; j++){ 
+  if (i == Men[j].Number_gradebook) {
+  printf("This number has been used\a\n");
+  return;
+  }
+  else strcpy(Men[Number].Number_gradebook, i);
+}
   printf("Surname > ");
-  scanf("%s", Men[Number].Surname);
+  scanf("%s", &Men[Number].Surname);
   printf("Name > ");
-  scanf("%s", Men[Number].Name);
+  scanf("%s", &Men[Number].Name);
   printf("Kafedra > ");
   scanf("%s", &Men[Number].Kafedra);
   printf("Faculty > ");
-  scanf("%s", &Men[Number].Faculty);
+	scanf("%s", &Men[Number].Faculty);
 
-  Number ++;
-} 
-void Change( void )
-{
-  FILE *F;
-  int i;
+	Number ++;
 
-  if ((F = fopen("students.csv", "wt")) == NULL)
-  {
-    fprintf(stderr, "File opened error 'students.csv'\n");
-    return;
-  }
-  printf("Enter number of element > ");
-  scanf("%i", &i);
-    if (i < 1 || i > Number)
-  {
-    fprintf(stderr, "Element %i don't exists'\n", i);
-    return;
-  }
-  
-  fclose(F);
+	return;
 }
 
-/* Функция для удаления элемента */
+int availability_student (struct student *students, char Number_g[N], int line)
+{
+	int i, k = -1;
+	for (i = 0; i < line; i++)
+	{
+		if (Number_g == Men[Number].Number_gradebook)
+			k = i;
+	}
+	return k;
+}
+
+/* Ôóíêöèÿ äëÿ ðåäàêòèðîâàíèÿ ýëåìåíòîâ */ 
+struct student *Change( struct student *students, int line )
+{
+	struct student tmpstudents;
+	int i, k;
+	printf("Enter gradebook > ");
+	do {
+		fflush(stdin);
+		scanf("%d", &tmpstudents.Number_gradebook);
+		k = availability_student(students, tmpstudents.Number_gradebook, line);
+		if(k == -1)
+		{
+			printf("No student found in file\a\n");
+			printf("Enter ID student to edit : ");
+		}
+	} while(k == -1);
+
+	printf("Enter new surname > ");
+	gets(tmpstudents.Surname);
+	printf("Enter new name > ");
+	gets(tmpstudents.Name);
+	printf("Enter new kafedra > ");
+	gets(tmpstudents.Kafedra);
+	printf("Enter new faculty > ");
+	gets(tmpstudents.Faculty);
+
+	for (i = 0; i < line; i++)
+	{
+		if (i == k)
+		{
+			strcpy(students[i].Number_gradebook, tmpstudents.Number_gradebook);
+			strcpy(students[i].Surname,tmpstudents.Surname);
+			strcpy(students[i].Name,tmpstudents.Name);
+			strcpy(students[i].Kafedra,tmpstudents.Kafedra);
+			strcpy(students[i].Faculty,tmpstudents.Faculty);
+		}
+	}
+
+	return students;
+}
+
+
+/* Ôóíêöèÿ äëÿ óäàëåíèÿ ýëåìåíòà */
 void Del( void )
 {
   int i;
@@ -78,7 +142,7 @@ void Del( void )
   scanf("%i", &i);
   if (i < 1 || i > Number)
   {
-    fprintf(stderr, "Element %i don't exists'\n", i);
+    fprintf(stderr, "Element %i don't exists'\a\n", i);
     return;
   }
 
@@ -87,8 +151,37 @@ void Del( void )
 
   Number --;
 } 
+struct student *read_student_csv()
+{
+	struct student *student =  calloc(0, sizeof(struct student));
+	FILE *F = fopen("student.csv", "r");
+	int i;
+	if (F == NULL)
+	{
+		printf("File don't opened\n");
+		return 0;
+	}
+	else
+	{
+		int line = count_students();
+		char tmp[N];
+		for (i = 0; i < line; i++)
+		{
+			fgets(tmp, N, F);
 
-/* Функция для сохранения массива в файле */
+			student = realloc(student, (i+1) * sizeof(struct student));
+
+			strcpy(student[i].Number_gradebook,strtok(tmp,"\n"));
+			strcpy(student[i].Surname,strtok(NULL,"\n"));
+			strcpy(student[i].Name,strtok(NULL,"\n"));
+			strcpy(student[i].Kafedra,strtok(NULL,"\n"));
+			strcpy(student[i].Faculty,strtok(NULL,"\n"));
+		}
+		return student;
+	}
+}
+
+/* Ôóíêöèÿ äëÿ ñîõðàíåíèÿ ìàññèâà â ôàéëå */
 void Save( void )
 {
   FILE *F;
@@ -96,18 +189,18 @@ void Save( void )
 
   if ((F = fopen("students.csv", "wt")) == NULL)
   {
-    fprintf(stderr, "File opened error 'students.csv'\n");
+    fprintf(stderr, "File opened error 'students.csv'\a\n");
     return;
   }
 
   fprintf(F, "%i\n", Number);
   for (i = 0; i < Number; i ++)
-    fprintf(F, "%s,%s,%s,%s,%s\n", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
+    fprintf(F, "%s\n%s\n%s\n%s\n%s\n", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
 
   fclose(F);
 } 
 
-/* Функция для чтения массива из файла */
+/* Ôóíêöèÿ äëÿ ÷òåíèÿ ìàññèâà èç ôàéëà */
 void Load( void )
 {
   FILE *F;
@@ -115,18 +208,18 @@ void Load( void )
 
   if ((F = fopen("students.csv", "rt")) == NULL)
   {
-    fprintf(stderr, "File opened Error\n");
+    fprintf(stderr, "File opened error 'students.csv'\a\n");
     return;
   }
 
   fscanf(F, "%i", &Number);
   for (i = 0; i < Number; i ++)
-    fscanf(F, "%s%s%s%s%s", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, &Men[i].Kafedra, Men[i].Faculty);
+    fscanf(F, "%s%s%s%s%s", &Men[i].Number_gradebook, &Men[i].Surname, &Men[i].Name, &Men[i].Kafedra, &Men[i].Faculty);
 
   fclose(F);
 } 
 
-/* Функция для упорядочивания массива по фамилии */
+/* Ôóíêöèÿ äëÿ ñîðòèðîâêè ìàññèâà ïî ôàìèëèè */
 void Sort( void )
 {
   int i, j;
@@ -142,7 +235,7 @@ void Sort( void )
       }
 } 
 
-/* Вывод меню и чтение номера выбранного пункта */
+/* Âûâîä ìåíþ */
 int Menu( void )
 {
   int c = 0;
@@ -164,11 +257,12 @@ int Menu( void )
   return c;
 } 
 
-/* Основная функция */
+/* Îñíîâíàÿ ôóíêöèÿ */
 int main()
 {
   int Selection;
-
+  int line = count_students();
+  struct student *students = read_student_csv();
   Number = 0;
   while ((Selection = Menu()) != '0' && Selection != 27)
     switch (Selection)
@@ -177,8 +271,8 @@ int main()
       Add();
       break;    
 	case '2':
-      Change();
-      break;
+	students = Change(students, line);
+	break;
     case '3':
       Save();
       break;
@@ -196,4 +290,3 @@ int main()
       break;
     }
 }
-
