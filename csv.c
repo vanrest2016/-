@@ -1,105 +1,214 @@
 #include <stdio.h>
-#include <conio.h>
+#include <stdlib.h>
+#include <locale.h>
 #include <string.h>
+#include <time.h>
+
 #define N 100
 
-/* Ñòðóêòóðà äëÿ õðàíåíèÿ èíôîðìàöèè ïðî îäíîãî ÷åëîâåêà */
-typedef struct student
-{
-  char Surname[N], Name[N], Kafedra[N], Faculty[N],  Number_gradebook[N];
-} ITEM;
-
-/* Ìàññèâ ìàêñèìóì íà 100 ÷åëîâåê */
-ITEM Men[N];
-
-/* Êîëè÷åñòâî çàíÿòûõ ýëåìåíòîâ â ìàññèâå */
-int Number;
+struct student {char id[N]; char Surname[N]; char Name[N]; char Middlename[N]; char Faculty[N]; char Specialty[N]; };
 
 int count_students()
 {
 	int line = 0;
-  FILE *F = fopen("students.csv", "r");
+	FILE *F = fopen("student.csv", "r");
+	
 	if (F == NULL)
 	{
-		printf("No opened error!\n");
+		printf("No file\a\n");
 	}
 	else
 	{
 		while (!feof(F))
 		{
 			if (fgetc(F)=='\n')
-				line++;
+			line++;
 		}
 		return ++line;
 		fclose(F);
 	}
 }
 
-/* Ôóíêöèÿ äëÿ âûâîäà âñåõ ýëåèåíòîâ */
-void Print( void )
+struct student *read_student_csv()
 {
-  int i;
+	int i;
+	struct student *student =  calloc(0, sizeof(struct student));
+	FILE *F = fopen("student.csv", "r");
+	
+	if (F == NULL)
+	{
+		printf("Not file\a\n");
+		return 0;
+	}
+	else
+	{
+		int line = count_students();
+		char tmp[N];
+		
+		for (i = 0; i < line; i++)
+		{
+			fgets(tmp, N, F);
 
-  printf("    Number       Surname             Name          Kafedra                 Faculty\n");
-  for (i = 0; i < Number; i ++)
-    printf("%2i. %-10s %-20s %-20s %-20s %-20s\n", i + 1, Men[i].Number_gradebook, Men[i].Surname,
-           Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
-} 
+			student = realloc(student, (i+1) * sizeof(struct student));
 
-/* Ôóíêöèÿ äëÿ äîáàâëåíèÿ ýëåìåíòà */
-void Add( void )
-{
-	char i[N];
-	int j=0;
-  if (Number == N)
-  {
-    fprintf(stderr, "Element don't add\n");
-    return;
-  }
-  printf("Number gradebook > ");
-  scanf("%s", &i);
-  for (j=0; j<=Number; j++){ 
-  if (i == Men[j].Number_gradebook) {
-  printf("This number has been used\a\n");
-  return;
-  }
-  else strcpy(Men[Number].Number_gradebook, i);
-}
-  printf("Surname > ");
-  scanf("%s", &Men[Number].Surname);
-  printf("Name > ");
-  scanf("%s", &Men[Number].Name);
-  printf("Kafedra > ");
-  scanf("%s", &Men[Number].Kafedra);
-  printf("Faculty > ");
-	scanf("%s", &Men[Number].Faculty);
-
-	Number ++;
-
-	return;
+			strcpy(student[i].id,strtok(tmp,";"));
+			strcpy(student[i].Surname,strtok(NULL,";"));
+			strcpy(student[i].Name,strtok(NULL,";"));
+			strcpy(student[i].Middlename,strtok(NULL,";"));
+			strcpy(student[i].Faculty,strtok(NULL,";"));
+			strcpy(student[i].Specialty,strtok(NULL,"\n"));
+		}
+		return student;
+	}
 }
 
-int availability_student (struct student *students, char Number_g[N], int line)
+struct student *write_student_csv(struct student *students, int line)
 {
-	int i, k = -1;
+	FILE *F = fopen("student.csv", "w+");
+	rewind(F);
+	
+	int i;
+	
+	for (i = 0; i < 1; i++)
+	{
+		fprintf(F,"%s",students[i].id); 
+		fprintf(F,";%s",students[i].Surname); 
+		fprintf(F,";%s",students[i].Name);
+		fprintf(F,";%s",students[i].Middlename); 
+		fprintf(F,";%s",students[i].Faculty); 
+		fprintf(F,";%s",students[i].Specialty);
+	}
+	
+	for (i = 1; i < line; i++)
+	{
+		fprintf(F,"\n%s",students[i].id); 
+		fprintf(F,";%s",students[i].Surname); 
+		fprintf(F,";%s",students[i].Name);
+		fprintf(F,";%s",students[i].Middlename); 
+		fprintf(F,";%s",students[i].Faculty); 
+		fprintf(F,";%s",students[i].Specialty);
+	}
+	
+	fclose(F);
+}
+
+int availability_student(struct student *students, char id[N], int line)
+{
+	int i;
+	int k = -1;
+	
 	for (i = 0; i < line; i++)
 	{
-		if (Number_g == Men[Number].Number_gradebook)
+		if (strcmp(id, students[i].id) == 0)
 			k = i;
 	}
 	return k;
 }
 
-/* Ôóíêöèÿ äëÿ ðåäàêòèðîâàíèÿ ýëåìåíòîâ */ 
-struct student *Change( struct student *students, int line )
+void print_student_csv(struct student *students, int line)
+{
+	int i;
+	
+	for( i = 0; i < line; i++)
+	{
+		if (students[i].id != 0) printf("%s; %s; %s; %s; %s; %s\n", students[i].id, students[i].Surname, students[i].Name, students[i].Middlename, students[i].Faculty, students[i].Specialty);
+	}
+}
+
+struct student *add_student(struct student *students, int line)
+{
+	struct student newstudent;
+
+	int k;
+	
+	printf("Enter ID : ");
+	
+	do {
+		scanf("%s", newstudent.id);
+		k = availability_student(students, newstudent.id, line);
+		if( k != -1)
+		{
+			printf("This student in the file\a\n");
+			printf("Enter ID : ");
+		}
+		
+	}
+	 while( k != -1);
+
+	printf("Enter surname : ");
+	scanf("%s", newstudent.Surname);
+	printf("Enter name : ");
+	scanf("%s", newstudent.Name);
+	printf("Enter middlename : ");
+	scanf("%s", newstudent.Middlename);
+	printf("Enter faculty : ");
+	scanf("%s", newstudent.Faculty);
+	printf("Enter specialty : ");
+	scanf("%s", newstudent.Specialty);
+
+	students = realloc(students, (line+1) * sizeof(struct student));
+
+	strcpy(students[line].id,newstudent.id);
+	strcpy(students[line].Surname,newstudent.Surname);
+	strcpy(students[line].Name,newstudent.Name);
+	strcpy(students[line].Middlename,newstudent.Middlename);
+	strcpy(students[line].Faculty,newstudent.Faculty);
+	strcpy(students[line].Specialty,newstudent.Specialty);
+
+	return students;
+}
+
+struct student *delete_student(struct student *students, int line)
+{
+	struct student *tmpstudents = calloc(line-1, sizeof(struct student));
+	int i;
+	int k;
+	printf("Enter ID : ");
+	do {
+		char id[N];
+		gets(id);
+		k = availability_student(students, id, line);
+		if(k == -1)
+		{
+			printf("No student found in file\a\n");
+			printf("Enter ID : ");
+		}
+	} while(k == -1);
+
+	for (i = 0; i < line; i++)
+	{
+		if (i < k)
+		{
+			strcpy(tmpstudents[i].id,students[i].id);
+			strcpy(tmpstudents[i].Surname,students[i].Surname);
+			strcpy(tmpstudents[i].Name,students[i].Name);
+			strcpy(tmpstudents[i].Middlename,students[i].Middlename);
+			strcpy(tmpstudents[i].Faculty,students[i].Faculty);
+			strcpy(tmpstudents[i].Specialty,students[i].Specialty);
+		}
+		else if (i > k)
+		{
+			strcpy(tmpstudents[i-1].id,students[i].id);
+			strcpy(tmpstudents[i-1].Surname,students[i].Surname);
+			strcpy(tmpstudents[i-1].Name,students[i].Name);
+			strcpy(tmpstudents[i-1].Middlename,students[i].Middlename);
+			strcpy(tmpstudents[i-1].Faculty,students[i].Faculty);
+			strcpy(tmpstudents[i-1].Specialty,students[i].Specialty);
+		}
+	}
+	
+	return tmpstudents;
+}
+
+struct student *edit_student(struct student *students, int line)
 {
 	struct student tmpstudents;
-	int i, k;
-	printf("Enter gradebook > ");
+	int k;
+	int i;
+	printf("Enter ID : ");
 	do {
-		fflush(stdin);
-		scanf("%d", &tmpstudents.Number_gradebook);
-		k = availability_student(students, tmpstudents.Number_gradebook, line);
+		scanf("%s", tmpstudents.id);
+		k = availability_student(students, tmpstudents.id, line);
 		if(k == -1)
 		{
 			printf("No student found in file\a\n");
@@ -107,186 +216,134 @@ struct student *Change( struct student *students, int line )
 		}
 	} while(k == -1);
 
-	printf("Enter new surname > ");
-	gets(tmpstudents.Surname);
-	printf("Enter new name > ");
-	gets(tmpstudents.Name);
-	printf("Enter new kafedra > ");
-	gets(tmpstudents.Kafedra);
-	printf("Enter new faculty > ");
-	gets(tmpstudents.Faculty);
+	printf("Enter new surname : ");
+	scanf("%s", tmpstudents.Surname);
+	
+	printf("Enter new name :");
+	scanf("%s", tmpstudents.Name);
+	
+	printf("Enter new middlename :");
+	scanf("%s", tmpstudents.Middlename);
+	
+	printf("Enter new faculty :");
+	scanf("%s", tmpstudents.Faculty);
+	
+	printf("Enter new specialty :");
+	scanf("%s", tmpstudents.Specialty);
 
-	for (i = 0; i < line; i++)
+	for ( i = 0; i < line; i++)
 	{
 		if (i == k)
 		{
-			strcpy(students[i].Number_gradebook, tmpstudents.Number_gradebook);
+			strcpy(students[i].id, tmpstudents.id);
 			strcpy(students[i].Surname,tmpstudents.Surname);
 			strcpy(students[i].Name,tmpstudents.Name);
-			strcpy(students[i].Kafedra,tmpstudents.Kafedra);
+			strcpy(students[i].Middlename,tmpstudents.Middlename);
 			strcpy(students[i].Faculty,tmpstudents.Faculty);
+			strcpy(students[i].Specialty,tmpstudents.Specialty);
 		}
 	}
 
 	return students;
 }
 
-
-/* Ôóíêöèÿ äëÿ óäàëåíèÿ ýëåìåíòà */
-void Del( void )
+void info_student(struct student *students, int line)
 {
-  int i;
-
-  Print();
-  printf("Enter number of element > ");
-  scanf("%i", &i);
-  if (i < 1 || i > Number)
-  {
-    fprintf(stderr, "Element %i don't exists'\a\n", i);
-    return;
-  }
-
-  for (i --; i < Number - 1; i ++)
-    Men[i] = Men[i + 1];
-
-  Number --;
-} 
-struct student *read_student_csv()
-{
-	struct student *student =  calloc(0, sizeof(struct student));
-	FILE *F = fopen("student.csv", "r");
 	int i;
-	if (F == NULL)
-	{
-		printf("File don't opened\n");
-		return 0;
-	}
-	else
-	{
-		int line = count_students();
-		char tmp[N];
-		for (i = 0; i < line; i++)
+	int k;
+	printf("Enter ID : ");
+	do {
+		char id[N];
+		scanf("%s", id);
+		k = availability_student(students, id, line);
+		if(k == -1)
 		{
-			fgets(tmp, N, F);
-
-			student = realloc(student, (i+1) * sizeof(struct student));
-
-			strcpy(student[i].Number_gradebook,strtok(tmp,"\n"));
-			strcpy(student[i].Surname,strtok(NULL,"\n"));
-			strcpy(student[i].Name,strtok(NULL,"\n"));
-			strcpy(student[i].Kafedra,strtok(NULL,"\n"));
-			strcpy(student[i].Faculty,strtok(NULL,"\n"));
+			printf("No student found in file\a\n");
+			printf("Enter ID : ");
 		}
-		return student;
+	} 
+	while(k == -1);
+
+	for (i = 0; i < line; i++)
+	{
+		if (i == k)
+		printf("ID: %s;\n Surname: %s;\n Name: %s;\n Middlename: %s;\n Faculty: %s;\n Specialty: %s\n", students[i].id,students[i].Surname, students[i].Name, students[i].Middlename, students[i].Faculty, students[i].Specialty);
 	}
 }
-
-/* Ôóíêöèÿ äëÿ ñîõðàíåíèÿ ìàññèâà â ôàéëå */
-void Save( void )
+void mainstudent()
 {
-  FILE *F;
-  int i;
+	struct student *students = read_student_csv();
+	int line = count_students();
+	FILE *flog;
+	time_t now;
+	struct tm  ts;
+	char buf[N];
+	time(&now);
+	ts = *localtime(&now);
+	strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S", &ts);
 
-  if ((F = fopen("students.csv", "wt")) == NULL)
-  {
-    fprintf(stderr, "File opened error 'students.csv'\a\n");
-    return;
-  }
-
-  fprintf(F, "%i\n", Number);
-  for (i = 0; i < Number; i ++)
-    fprintf(F, "%s\n%s\n%s\n%s\n%s\n", Men[i].Number_gradebook, Men[i].Surname, Men[i].Name, Men[i].Kafedra, Men[i].Faculty);
-
-  fclose(F);
-} 
-
-/* Ôóíêöèÿ äëÿ ÷òåíèÿ ìàññèâà èç ôàéëà */
-void Load( void )
-{
-  FILE *F;
-  int i;
-
-  if ((F = fopen("students.csv", "rt")) == NULL)
-  {
-    fprintf(stderr, "File opened error 'students.csv'\a\n");
-    return;
-  }
-
-  fscanf(F, "%i", &Number);
-  for (i = 0; i < Number; i ++)
-    fscanf(F, "%s%s%s%s%s", &Men[i].Number_gradebook, &Men[i].Surname, &Men[i].Name, &Men[i].Kafedra, &Men[i].Faculty);
-
-  fclose(F);
-} 
-
-/* Ôóíêöèÿ äëÿ ñîðòèðîâêè ìàññèâà ïî ôàìèëèè */
-void Sort( void )
-{
-  int i, j;
-  ITEM Temp;
-
-  for (j = Number - 1; j > 0; j --)
-    for (i = 0; i < j; i ++)
-      if (strcmp(Men[i].Surname, Men[i + 1].Surname) > 0)
-      {
-        Temp = Men[i];
-        Men[i] = Men[i + 1];
-        Men[i + 1] = Temp;
-      }
-} 
-
-/* Âûâîä ìåíþ */
-int Menu( void )
-{
-  int c = 0;
-
-  while ((c < '0' || c > '7') && c != 27)
-  {
-    printf("0 : Exit\n"
+	flog = fopen("library.log","a");
+	for(;;)
+	{
+		printf("0 : Exit\n"
             "1 : Add\n"
-        	"2 : Change\n"
-            "3 : Save\n"
-            "4 : Load\n"
-            "5 : Enter\n"
-            "6 : Sort\n"
-            "7 : Delete\n"
+        	"2 : Delete\n"
+            "3 : Change\n"
+            "4 : Information\n"
+            "5 : Print all\n"
            ">");
-    c = getch();
-    printf("%c\n", c);
-  }
-  return c;
-} 
+           
+		int comand;
+		
+		scanf("%d",&comand);
+		
+		switch(comand)
+		{
+			case 1:
+				students = add_student(students, line);
+				++line;
+				break;
+			case 2:
+				students = delete_student(students, line);
+				--line;
+				break;
+			case 3:
+				students = edit_student(students, line);
+				break;
+			case 4:
+				info_student(students, line);
+				break;
+			case 5:
+				print_student_csv(students, line);
+				break;
+		}
+		if(comand == 0)
+			break;
 
-/* Îñíîâíàÿ ôóíêöèÿ */
+		fprintf(flog,"\n\"%s\"",buf);
+		if(comand==1)
+			fprintf(flog,",\"Add\"");
+		else if(comand==2)
+			fprintf(flog,",\"Delete\"");
+		else if(comand==3)
+			fprintf(flog,",\"Change\"");
+		else if(comand==4)
+			fprintf(flog,",\"Information\"");
+		else if(comand==5)
+			fprintf(flog,",\"Print all\"");
+		else if(comand==0)
+			fprintf(flog,",\"Exit\"");
+		else break;
+		fclose(flog);
+	}
+
+	write_student_csv(students, line);
+	free(students);
+
+}
 int main()
 {
-  int Selection;
-  int line = count_students();
-  struct student *students = read_student_csv();
-  Number = 0;
-  while ((Selection = Menu()) != '0' && Selection != 27)
-    switch (Selection)
-    {
-    case '1':
-      Add();
-      break;    
-	case '2':
-	students = Change(students, line);
-	break;
-    case '3':
-      Save();
-      break;
-    case '4':
-      Load();
-      break;
-    case '5':
-      Print();
-      break;
-    case '6':
-      Sort();
-      break;
-    case '7':
-      Del();
-      break;
-    }
-}
+	mainstudent();
+	
+	return 0;
+}	
